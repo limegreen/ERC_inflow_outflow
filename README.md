@@ -13,7 +13,14 @@ Data were shared by the ERC based on official ERC data, aggregated over several 
 
 ## Plots
 
-![](ercHost_per_capita.png)
+ERC grants per capita of host countries, for the 12 biggest hosting countries
+
+
+![](ercHost per capita.png)
+
+
+Looking at populations of EU28+ trying to see which countries with larger populations not represented in ERC hosting
 
 
 ![](ercHost by pop.png)
+

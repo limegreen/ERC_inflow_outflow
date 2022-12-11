@@ -42,6 +42,8 @@ ggplot(ercHost, aes(x = reorder(`Host Country`, `ERC per million pop`), `ERC per
   scale_x_discrete("") +
   coord_flip() + theme_bw(16)
 
+ggsave("ercHost per capita.png")
+
 pop3 <- left_join(pop2, countrycode::codelist, by = c("country" = "eurostat")) %>%
   select(country, ObsValue, eu28) %>%
   filter(country == "IL" | eu28 == "EU" | country == "CH")
@@ -59,5 +61,40 @@ ggplot(ercMissingHost, aes(x = reorder(`Host Country`, hostPop), hostPop, colour
   geom_bar(stat = "identity") + 
   scale_x_discrete("") +
   coord_flip() + theme_bw(16)
+
+ggsave("ercHost by pop.png")
+
+
+#how many from each country are elsewhere
+
+ercOut <- group_by(erc, nationality) %>%
+  summarise(outC = n()) %>%
+  mutate(`Number of countries hosted in (approx)` = countrycode::countrycode(nationality, "eurostat", "country.name")) %>%
+  filter(`Number of countries hosted in (approx)` != "Other")
+
+
+
+ggplot(ercOut, aes(x = reorder(`Number of countries hosted in (approx)`, outC), outC)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_x_discrete("") +
+  theme_bw(16)
+
+erc$out <- "HOME"
+erc$out[which(erc$host != erc$nationality)] <- "OUT"
+
+ercOut2 <- filter(erc, out == "OUT") %>%
+  left_join(pop2, by = c("nationality" = "country")) %>%
+  group_by(nationality) %>%
+  summarise(outbound_research = sum(N), outPop = max(ObsValue)) %>%
+  mutate(`Outbound ERC per capita per million` = outbound_research / as.numeric(outPop) * 1000000,
+         nationality = countrycode::countrycode(nationality, "eurostat", "country.name")) %>%
+  filter(nationality != "Russia" | nationality != NA)
+
+ggplot(ercOut2, aes(x = reorder(nationality, `Outbound ERC per capita per million`), `Outbound ERC per capita per million`)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_x_discrete("") +
+  theme_bw(16)
 
 ```
