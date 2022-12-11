@@ -23,8 +23,8 @@ pop2 <- dplyr::filter(pop, Time == 2021 & SEX == "T" & AGE == "TOTAL")
 pop2$country <- countrycode::countrycode(pop2$LOCATION, "iso3c", "eurostat")
 pop2 <- dplyr::select(pop2, country, ObsValue)
 
-# erc$host[which(erc$host == "UK")] <- "GB"
-# erc$host[which(erc$host == "EL")] <- "GR"
+# ERC per million for the top 12
+
 
 erc <- dplyr::left_join(erc, pop2, by = c("host" = "country")) %>%
   dplyr::left_join(pop2, by = c("nationality" = "country")) %>%
@@ -43,6 +43,8 @@ ggplot(ercHost, aes(x = reorder(`Host Country`, `ERC per million pop`), `ERC per
   coord_flip() + theme_bw(16)
 
 ggsave("ercHost per capita.png")
+
+# ERC researchers per million, but plotted against population to see which countries are under-represented
 
 pop3 <- left_join(pop2, countrycode::codelist, by = c("country" = "eurostat")) %>%
   select(country, ObsValue, eu28) %>%
@@ -65,7 +67,7 @@ ggplot(ercMissingHost, aes(x = reorder(`Host Country`, hostPop), hostPop, colour
 ggsave("ercHost by pop.png")
 
 
-#how many from each country are elsewhere
+#how many outbound countries does each nationality have researchers in
 
 ercOut <- group_by(erc, nationality) %>%
   summarise(outC = n()) %>%
@@ -79,6 +81,8 @@ ggplot(ercOut, aes(x = reorder(`Number of countries hosted in (approx)`, outC), 
   coord_flip() +
   scale_x_discrete("") +
   theme_bw(16)
+
+#how many researchers per million are in other countries (of the hosts listed)
 
 erc$out <- "HOME"
 erc$out[which(erc$host != erc$nationality)] <- "OUT"
