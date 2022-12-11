@@ -1,0 +1,63 @@
+---
+title: "ERC plots"
+author: "James Green"
+date: "2022-12-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(OECD)
+library(tidyverse)
+
+pop <- OECD::get_dataset("HISTPOP", start_time = 2015)
+OECD::browse_metadata("HISTPOP")
+
+
+erc <- read_csv("Data/data.csv")
+
+
+
+pop2 <- dplyr::filter(pop, Time == 2021 & SEX == "T" & AGE == "TOTAL")
+pop2$country <- countrycode::countrycode(pop2$LOCATION, "iso3c", "eurostat")
+pop2 <- dplyr::select(pop2, country, ObsValue)
+
+# erc$host[which(erc$host == "UK")] <- "GB"
+# erc$host[which(erc$host == "EL")] <- "GR"
+
+erc <- dplyr::left_join(erc, pop2, by = c("host" = "country")) %>%
+  dplyr::left_join(pop2, by = c("nationality" = "country")) %>%
+  rename(hostPop = ObsValue.x, resPop = ObsValue.y)
+
+ercHost <- group_by(erc, host) %>%
+  summarise(hostPop = max(hostPop), researcher = sum(N)) %>%
+  mutate(`ERC per million pop` = researcher / as.numeric(hostPop) * 1000000,
+         `Host Country` = countrycode::countrycode(host, "eurostat", "country.name")) 
+
+
+
+ggplot(ercHost, aes(x = reorder(`Host Country`, `ERC per million pop`), `ERC per million pop`)) + 
+  geom_bar(stat = "identity") +
+  scale_x_discrete("") +
+  coord_flip() + theme_bw(16)
+
+pop3 <- left_join(pop2, countrycode::codelist, by = c("country" = "eurostat")) %>%
+  select(country, ObsValue, eu28) %>%
+  filter(country == "IL" | eu28 == "EU" | country == "CH")
+
+ercMissingHost <- left_join(pop3, ercHost, by = c("country" = "host")) %>%
+  mutate(ercBig = replace_na(`Host Country`, "No"), ercBig = replace_na(ercBig, "Yes"),
+          `Host Country` = countrycode::countrycode(country, "eurostat", "country.name"),
+         hostPop = as.numeric(ObsValue))
+
+ercMissingHost$ercBig <- "Yes"
+ercMissingHost$ercBig[which(is.na(ercMissingHost$researcher))] <- "No"
+
+
+ggplot(ercMissingHost, aes(x = reorder(`Host Country`, hostPop), hostPop, colour = ercBig, fill = ercBig)) + 
+  geom_bar(stat = "identity") + 
+  scale_x_discrete("") +
+  coord_flip() + theme_bw(16)
+
+```
