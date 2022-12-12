@@ -95,7 +95,27 @@ ercOut2 <- filter(erc, out == "OUT") %>%
          nationality = countrycode::countrycode(nationality, "eurostat", "country.name")) %>%
   filter(nationality != "Russia" | nationality != NA)
 
+
+
 ggplot(ercOut2, aes(x = reorder(nationality, `Outbound ERC per capita per million`), `Outbound ERC per capita per million`)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_x_discrete("") +
+  theme_bw(16)
+
+# try to tabulate outbound ERC per capita with hosting country
+
+ercOut3 <- filter(erc, out == "OUT") %>%
+  mutate(`Outbound ERC per capita per million` = N / as.numeric(resPop) * 1000000,
+         nationality = countrycode::countrycode(nationality, "eurostat", "country.name"),
+         host = countrycode::countrycode(host, "eurostat", "country.name"))
+
+ercOut3$nationality <- reorder()
+
+ggplot(ercOut3, aes(nationality,
+                    `Outbound ERC per capita per million`,
+                    colour = host, 
+                    fill = host)) +
   geom_bar(stat = "identity") +
   coord_flip() +
   scale_x_discrete("") +
